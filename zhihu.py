@@ -13,8 +13,8 @@ from PIL import Image
 class zhihu():
     def __init__(self):
         self.data = {
-            'email':'1428260548@qq.com',
-            'password':'luyibo',
+            'email':'*****',
+            'password':'*****',
             'remember_me':'true',
         }
         self.s = requests.session()
@@ -59,16 +59,26 @@ class zhihu():
 
     def get_html(self,url):
         r = self.s.get(url,headers=self.header,cookies=self.cookies).content
+        print r
         ALL = bs(r,'lxml').find_all('div',class_='feed-item')
         self.start = ALL[-1].get('id')
-        with open('zhihu1.txt','w+') as f:
+        with open('zhihu1.txt','a') as f:
             for each in ALL:
-                f.write(each.find('h2').string)
-                f.write('------------------')
-                '''a = each.find('textarea')
+                f.write(each.find('h2').string+' \n')
+                if each.find('div',class_='zm-item-answer-author-info'):
+                     if each.find('div',class_='zm-item-answer-author-info').a:
+                              f.write( each.find('div',class_='zm-item-answer-author-info').a.string+'\t')
+                     else:f.write( each.find('div',class_='zm-item-answer-author-info').span.string+'\t')
+                else:
+                     f.write( each.find('div',class_="feed-source").a.string+'\t')
+                if each.find('a',class_='zm-item-vote-count'):
+                     f.write( each.find('a',class_='zm-item-vote-count').string+' \n')
+                else:
+                     f.write ('None \n')
+                a = each.find('textarea')
                 if a:
                     a = re.sub('<br>','\n',a.text)
-                    a = re.sub('<p>|</p>','\t',a)
+                    a = re.sub('<p>|</p>','',a)
                     a = re.sub('<b>|</b>','',a)
                     a = re.sub('<li>|</li>','\t',a)
                     a = re.sub('<a .*?>|</a>','',a)
@@ -76,18 +86,10 @@ class zhihu():
                     a = re.sub('<u>|</u>','',a)
                     a = re.sub('<i .*?>|</i>','',a)
                     a = re.sub('<ul>|</ul>','',a)
-                    f.write( a)
+                    f.write( a+'\n')
                 else:
-                     f.write( 'None')
-
-                if each.find('div',class_='zm-item-answer-author-info'):
-                     f.write( each.find('div',class_='zm-item-answer-author-info').a.string)
-                else:
-                     f.write( 'None')
-                if each.find('a',class_='zm-item-vote-count'):
-                     f.write( each.find('a',class_='zm-item-vote-count').string)
-                else:
-                     f.write ('None')'''
+                     f.write( 'None \n')
+                f.write('\n------------------------------- \n')
 
     def get_next(self,url):
         dic = {}
@@ -100,9 +102,40 @@ class zhihu():
             p = json.dumps(dic)
             formdata["params"] = p
             t = self.s.post(url,headers=self.header,data=formdata)
-            for e in json.loads(t.text)['msg']:
-                print bs(e,'lxml').find('h2').string
-                self.start = bs(e,'lxml').find('div',class_='feed-item').get('id')
+            print len(json.loads(t.text)['msg'])
+            for each in json.loads(t.text)['msg']:
+
+                each = bs(each,'lxml')
+                self.start = each.find('div',class_='feed-item').get('id')
+                with open('zhihu1.txt','a') as f:
+                    f.write( each.find('h2').string+'\n')
+                    a = each.find('textarea')
+
+                    if a:
+                        a = a.string
+                        a = re.sub('<br>','\n',a)
+                        a = re.sub('<p>|</p>','',a)
+                        a = re.sub('<b>|</b>','',a)
+                        a = re.sub('<li>|</li>','\t',a)
+                        a = re.sub('<a .*?>|</a>','',a)
+                        a =re.sub('<blockquote>|</blockquote>','',a)
+                        a = re.sub('<u>|</u>','',a)
+                        a = re.sub('<i .*?>|</i>','',a)
+                        a = re.sub('<ul>|</ul>','',a)
+                        f.write( a+'\n')
+                    else:
+                         f.write( 'None\n')
+                    if each.find('div',class_='zm-item-answer-author-info'):
+                         if each.find('div',class_='zm-item-answer-author-info').a:
+                             f.write( each.find('div',class_='zm-item-answer-author-info').a.string+'\t')
+                         else:f.write( each.find('div',class_='zm-item-answer-author-info').span.string+'\t')
+                    else:
+                         f.write( each.find('div',class_="feed-source").a.string+'\t')
+                    if each.find('a',class_='zm-item-vote-count'):
+                         f.write( each.find('a',class_='zm-item-vote-count').string+'\n')
+                    else:
+                         f.write ('None')
+                    f.write('\n-------------------------------\n')
 
 
 
